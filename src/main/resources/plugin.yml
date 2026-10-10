@@ -1,7 +1,7 @@
 name: RexonSMP
-version: 1.0
+version: '1.0'
 main: com.rexonsmp.RexonSMP
-api-version: '1.20'
+api-version: '26.3'
 description: Sidebar scoreboard showing balance, deaths and kills
 commands:
   bal:
