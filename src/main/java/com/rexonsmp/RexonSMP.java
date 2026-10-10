@@ -5,7 +5,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.command.Command;
@@ -33,10 +32,15 @@ public class RexonSMP extends JavaPlugin implements Listener {
 
     private static final double START_BALANCE = 0.0;
     private static final int LINES = 4; // dashes, balance, deaths, kills
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     private final Map<UUID, Double> balances = new HashMap<>();
     private final Map<UUID, Scoreboard> boards = new HashMap<>();
     private File balanceFile;
+
+    private static Component c(String text) {
+        return LEGACY.deserialize(text);
+    }
 
     @Override
     public void onEnable() {
@@ -80,15 +84,16 @@ public class RexonSMP extends JavaPlugin implements Listener {
 
     private void setupBoard(Player player) {
         Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective obj = board.registerNewObjective(
-                "rexon", Criteria.DUMMY,
-                Component.text("RexonSMP", NamedTextColor.GOLD, TextDecoration.BOLD));
+        Component title = Component.text("RexonSMP")
+                .color(NamedTextColor.GOLD)
+                .decorate(TextDecoration.BOLD);
+        Objective obj = board.registerNewObjective("rexon", Criteria.DUMMY, title);
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         // One team per line so we can change the text without flicker
         for (int i = 0; i < LINES; i++) {
             Team team = board.registerNewTeam("line" + i);
-            String entry = ChatColor.values()[i] + "" + ChatColor.RESET; // unique invisible entry
+            String entry = "\u00a7" + i + "\u00a7r"; // unique invisible entry
             team.addEntry(entry);
             obj.getScore(entry).setScore(LINES - i); // higher score = higher on screen
         }
@@ -111,7 +116,7 @@ public class RexonSMP extends JavaPlugin implements Listener {
     private void setLine(Scoreboard board, int index, String text) {
         Team team = board.getTeam("line" + index);
         if (team != null) {
-            team.prefix(LegacyComponentSerializer.legacyAmpersand().deserialize(text));
+            team.prefix(c(text));
         }
     }
 
@@ -160,35 +165,34 @@ public class RexonSMP extends JavaPlugin implements Listener {
         if (cmd.getName().equalsIgnoreCase("bal")) {
             if (args.length == 0) {
                 if (!(sender instanceof Player player)) {
-                    sender.sendMessage("Console must use /bal <player>");
+                    sender.sendMessage(c("Console must use /bal <player>"));
                     return true;
                 }
-                player.sendMessage(ChatColor.GOLD + "Your balance: " + ChatColor.WHITE
-                        + formatMoney(getBalance(player.getUniqueId())));
+                player.sendMessage(c("&6Your balance: &f" + formatMoney(getBalance(player.getUniqueId()))));
             } else {
                 OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-                sender.sendMessage(ChatColor.GOLD + args[0] + "'s balance: " + ChatColor.WHITE
-                        + formatMoney(getBalance(target.getUniqueId())));
+                sender.sendMessage(c("&6" + args[0] + "'s balance: &f"
+                        + formatMoney(getBalance(target.getUniqueId()))));
             }
             return true;
         }
 
         if (cmd.getName().equalsIgnoreCase("setbal")) {
             if (args.length != 2) {
-                sender.sendMessage(ChatColor.RED + "Usage: /setbal <player> <amount>");
+                sender.sendMessage(c("&cUsage: /setbal <player> <amount>"));
                 return true;
             }
             double amount;
             try {
                 amount = Double.parseDouble(args[1]);
             } catch (NumberFormatException ex) {
-                sender.sendMessage(ChatColor.RED + "That's not a valid number.");
+                sender.sendMessage(c("&cThat's not a valid number."));
                 return true;
             }
             OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
             setBalance(target.getUniqueId(), amount);
             saveBalances();
-            sender.sendMessage(ChatColor.GREEN + "Set " + args[0] + "'s balance to " + formatMoney(amount));
+            sender.sendMessage(c("&aSet " + args[0] + "'s balance to " + formatMoney(amount)));
             return true;
         }
 
