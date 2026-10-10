@@ -1,0 +1,18 @@
+name: RexonSMP
+version: 1.0
+main: com.rexonsmp.RexonSMP
+api-version: '1.20'
+description: Sidebar scoreboard showing balance, deaths and kills
+commands:
+  bal:
+    description: Check your balance
+    usage: /bal [player]
+    aliases: [balance]
+  setbal:
+    description: Set a player's balance
+    usage: /setbal <player> <amount>
+    permission: rexonsmp.admin
+permissions:
+  rexonsmp.admin:
+    description: Allows using /setbal
+    default: op
